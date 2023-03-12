@@ -1,4 +1,5 @@
 # Performs the scaling algorithm described very shortly in the book
+# https://en.wikipedia.org/wiki/Ford%E2%80%93Fulkerson_algorithm
 import sys
 from sys import stdin
 from collections import defaultdict
@@ -20,7 +21,7 @@ def get_delta(max):
 def flow(source, sink, maxNodeCap):
     delta = get_delta(maxNodeCap)
     used_edges = set()
-    bottlenecks = []
+    max_flow = 0
 
     while delta != 0:
         is_path, path, min_cap = find_path(graph, source, sink, delta)
@@ -29,25 +30,25 @@ def flow(source, sink, maxNodeCap):
             delta = delta / 2
             continue
         else:
-            bottlenecks.append(min_cap)
+            max_flow += min_cap
             for u, v in path:
                 edge = (u, v)
                 used_edges.add(edge)
-                edge_cap_used[edge] = edge_cap_used[edge] + min_cap # Update how much capacity is used
+                edge_cap_used[edge] += min_cap # Update how much capacity is used
                 graph[u][v] = graph[u][v] - min_cap # Update capacity left for that edge
 
-    return used_edges, sum(bottlenecks)
+    return used_edges, max_flow
     
         
 # This gives a list sorted by the capacity from low to high
 # Returns: a sorted list of tuples where the tuple is (capacity, nodeId)
-def get_next_nodes(nodes, delta):
+def get_next_nodes(adj_nodes, delta):
     nodes = []
-    for v, c in nodes.items():
+    for v, c in adj_nodes.items():
         if c >= delta:
             nodes.append((c, v))
     
-    return nodes.sort() # Sorts by capacity first, if they are equal, then node number
+    return nodes # Sorts by capacity first, if they are equal, then node number
 
 def find_path(graph, source, sink, delta):
 
@@ -74,7 +75,7 @@ def find_path(graph, source, sink, delta):
         next_nodes = get_next_nodes(graph[current], delta)
 
         if not next_nodes: 
-            path.pop() # Since the current we are cannot continue the path
+            path.pop() # Since the current cannot continue the path
             continue
 
         for _, v in next_nodes:
@@ -97,10 +98,11 @@ max_node_cap = 0
 for _ in range(m):
     u, v, c = map(int, next(stdin).split())
     graph[u][v] = c
+    edge_cap_used[(u,v)] = 0
     max_node_cap = max(max_node_cap, c)
 
-used_edges, max_flow = flow(graph, s, t, max_node_cap)
+used_edges, max_flow = flow(s, t, max_node_cap)
 
-print("{} {} {}", n, max_flow, len(used_edges))
+print(n, max_flow, len(used_edges))
 for u,v in used_edges:
-    print("{} {} {}", u, v, edge_cap_used[(u,v)])
+    print(u, v, edge_cap_used[(u,v)])
