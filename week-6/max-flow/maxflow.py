@@ -2,89 +2,73 @@
 # https://en.wikipedia.org/wiki/Ford%E2%80%93Fulkerson_algorithm
 import sys
 from sys import stdin
-from collections import defaultdict
-import math
+from collections import defaultdict, deque
 
 graph = defaultdict(lambda: defaultdict(int))
 edge_cap_used = dict() 
 
-# Calculates the delta for the scaling algorithm
-def get_delta(max):
-    a = int(math.log2(max))
-    res = 2**a
-    if res > max:
-        return 2**(a-1)
-
-    return res
-
 # Performs that algorithm called "The Scaling" in order to find the maximum flow
-def flow(source, sink, maxNodeCap):
-    delta = get_delta(maxNodeCap)
+def flow(source, sink, node_count):
     used_edges = set()
     max_flow = 0
-
-    while delta != 0:
-        is_path, path, min_cap = find_path(graph, source, sink, delta)
+    while True:
+        is_path, path, min_cap = find_path(graph, source, sink, node_count)
 
         if not is_path:
-            delta = delta / 2
-            continue
+            break
         else:
             max_flow += min_cap
-            for u, v in path:
-                edge = (u, v)
+            parent = sink
+            current = path[parent][1]
+
+            while current != -1:
+                edge = (current, parent)
                 used_edges.add(edge)
-                edge_cap_used[edge] += min_cap # Update how much capacity is used
-                graph[u][v] = graph[u][v] - min_cap # Update capacity left for that edge
+                edge_cap_used[edge] += min_cap
+                graph[current][parent] -= min_cap
+
+                # get next node
+                parent = current
+                current = path[parent][1]
 
     return used_edges, max_flow
     
-        
-# This gives a list sorted by the capacity from low to high
-# Returns: a sorted list of tuples where the tuple is (capacity, nodeId)
-def get_next_nodes(adj_nodes, delta):
-    nodes = []
-    for v, c in adj_nodes.items():
-        if c >= delta:
-            nodes.append((c, v))
-    
-    return nodes # Sorts by capacity first, if they are equal, then node number
+def find_path(graph, source, sink, node_count):
 
-def find_path(graph, source, sink, delta):
-
-    path = []
+    path = [(0, -1)] * node_count
     is_path_found = False
-    next_node_stack = []
+    next_node_stack = deque()
 
     # Start from source
-    next_nodes = get_next_nodes(graph[source], delta)
-    for _, v in next_nodes:
-        next_node_stack.append((source, v))
+    for v, c in graph[source].items():
+        if c > 0:
+            path[v] = (c, source)
+            next_node_stack.append((source, v))
 
-    # Do DFS through the graph
+            if v == sink:
+                is_path_found = True
+
+    # Do BFS through the graph
     while next_node_stack and not is_path_found:
-        edge = next_node_stack.pop() 
-        current = edge[1]
-        path.append(edge)
+        current = next_node_stack.popleft()[1]
 
-        # If we reach the source then a path has been found
-        if current == sink:
-            is_path_found = True
-            continue
+        # Get adjacent nodes
+        for v, c in graph[current].items():
+            if c > 0 and path[v][1] == -1:
+                path[v] = (c, current)
+                next_node_stack.append((current, v))
+            
+                if v == sink:
+                    is_path_found = True
+                    break
 
-        next_nodes = get_next_nodes(graph[current], delta)
-
-        if not next_nodes: 
-            path.pop() # Since the current cannot continue the path
-            continue
-
-        for _, v in next_nodes:
-            next_node_stack.append((current, v))
 
     # Find the min capacity size in the path 
     min_cap = sys.maxsize
-    for u,v in path:
-        min_cap = min(min_cap, graph[u][v])
+    cost, current = path[sink]
+    while current != -1:
+        min_cap = min(min_cap, cost)
+        cost, current = path[current]
 
     return (is_path_found, path, min_cap)
 
@@ -101,7 +85,7 @@ for _ in range(m):
     edge_cap_used[(u,v)] = 0
     max_node_cap = max(max_node_cap, c)
 
-used_edges, max_flow = flow(s, t, max_node_cap)
+used_edges, max_flow = flow(s, t, n)
 
 print(n, max_flow, len(used_edges))
 for u,v in used_edges:
