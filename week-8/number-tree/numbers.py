@@ -2,10 +2,8 @@ import string
 from sys import stdin
 
 inps = next(stdin).split()
-n = int(inps[0]) + 1
-
-numbers = [i for i in range((2**n)-1, 0, -1)]
-
+h = int(inps[0]) + 1
+n = (2**h)-1
 
 def calc_index(command: string):
     index = 1
@@ -19,6 +17,6 @@ def calc_index(command: string):
 
 if len(inps) > 1:
     index = calc_index(inps[1])
-    print(numbers[index])
+    print(n-index)
 else:
-    print(numbers[0])
+    print(n)
