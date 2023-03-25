@@ -1,4 +1,3 @@
-# This is the solution for the king of the north problem
 from collections import defaultdict
 from itertools import product
 from flow import flow

@@ -42,7 +42,7 @@ def flow(orggraph, src,dest):
                 continue
             else:
                 return (current_flow,
-                        [ (a, b , c -graph[a][b]) for a,d in orggraph.items() for b,c in d.items() if graph[a][b] < c],
+                        [ (a, b , c - graph[a][b]) for a,d in orggraph.items() for b,c in d.items() if graph[a][b] < c],
                         p_or_seen)
 
         p = p_or_seen
